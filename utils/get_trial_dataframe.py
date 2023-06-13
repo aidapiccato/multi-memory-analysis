@@ -21,6 +21,8 @@ def _get_trial_data(trial, trial_num):
     stim = init_meta_state['stim']
 
     d = {'trial_num': trial_num, 'time': trial[1][0][1]}
+    d['stim'] = stim['filename']
+    d['visible'] = stim['visible']
     for i in range(6):
         d[f'object_{i}_x'] = None
         d[f'object_{i}_y'] = None
@@ -105,6 +107,8 @@ def _get_trial_data(trial, trial_num):
                     d['response_theta'] = _get_angle(d['response_x'], d['response_y'])
                 response = True
 
+    if not response:
+        return None
     
     d['visible_s'] = d['phase_delay_time'] - d['phase_visible_time']
     if d['final_phase'] != 'visible':
@@ -114,8 +118,7 @@ def _get_trial_data(trial, trial_num):
     elif d['final_phase'] != 'cue':
         d['reaction_time_s'] = d['reaction_time_steps'] / 60
 
-    if not response:
-        return None
+
     # Removing keys we don't need
     for k in ['phase_visible_time', 'phase_delay_time', 'phase_fixation_time', 
               'phase_cue_time', 'phase_response_time', 'reaction_time_steps',
