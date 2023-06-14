@@ -157,6 +157,7 @@ def _get_long_visible_s(df):
     df.long_visible_s = df.long_visible_s.fillna(0)
     df.long_visible_s = df.long_visible_s.cumsum()
     return df    
+
 def _get_long_delay_s(df):
     """Get long-term delay interval
 
@@ -182,7 +183,6 @@ def _postprocess_trial_dataframe(df):
     ltm_df = ltm_df.groupby('block_id').apply(_get_long_visible_s).reset_index(drop=True)
 
     stm_df = df[~df.ltm]
-
 
     df = pd.concat([ltm_df, stm_df])
 
