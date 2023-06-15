@@ -21,6 +21,9 @@ def _get_trial_data(trial, trial_num):
     stim = init_meta_state['stim']
 
     d = {'trial_num': trial_num, 'time': trial[1][0][1]}
+    d['block_id'] = stim['filename']
+    d['visible'] = stim['visible']
+    d['ltm'] = stim['ltm']
     for i in range(6):
         d[f'object_{i}_x'] = None
         d[f'object_{i}_y'] = None
@@ -104,6 +107,10 @@ def _get_trial_data(trial, trial_num):
                     d['response_y'] = meta_state['response'][1]
                     d['response_theta'] = _get_angle(d['response_x'], d['response_y'])
                 response = True
+<<<<<<< HEAD
+=======
+
+>>>>>>> 1c5c26c0ccafc99667e499a3ebc21df2767ca4df
     if not response:
         return None
     
@@ -115,10 +122,14 @@ def _get_trial_data(trial, trial_num):
     elif d['final_phase'] != 'cue':
         d['reaction_time_s'] = d['reaction_time_steps'] / 60
 
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 1c5c26c0ccafc99667e499a3ebc21df2767ca4df
     # Removing keys we don't need
-    for k in ['phase_visible_time', 'phase_delay_time', 'phase_fixation_time', 
-              'phase_cue_time', 'phase_response_time', 'reaction_time_steps',
+    for k in ['phase_delay_time', 'phase_fixation_time', 
+              'phase_response_time', 'reaction_time_steps',
               'final_phase']:
         d.pop(k)
 
@@ -137,6 +148,52 @@ def get_trial_dataframe(trial_paths):
         for k in trial_dicts[0].keys()
     }
     df = pd.DataFrame(full_data)
-    df = df.dropna(subset='response_object_ind')
-    
+
+    df = _postprocess_trial_dataframe(df)
+
+    return df
+
+def _get_long_visible_s(df):
+    """Get long-term encoding interval
+
+    Args:
+        df (dataframe): Trial dataframe for a single block
+    """
+    vis_df = df[df.visible == 1]
+    df['long_visible_s'] = vis_df.visible_s
+    df.long_visible_s = df.long_visible_s.fillna(0)
+    df.long_visible_s = df.long_visible_s.cumsum()
+    return df    
+
+def _get_long_delay_s(df):
+    """Get long-term delay interval
+
+    Args:
+        df (dataframe): Trial dataframe for a single block
+    """
+    vis_df = df[df.visible == 1]
+    df['last_vis_time'] = vis_df.phase_visible_time + vis_df.visible_s
+    df.last_vis_time = df.last_vis_time.replace(to_replace=None, method='ffill')
+    df['long_delay_s'] = df.phase_cue_time - df.last_vis_time
+    return df
+
+def _postprocess_trial_dataframe(df):
+    """_summary_
+
+    Args:
+        df (dataframe): Trial dataframe
+    """
+
+    # Getting long delay and visible times
+    ltm_df = df[df.ltm]
+    ltm_df = ltm_df.groupby('block_id').apply(_get_long_delay_s).reset_index(drop=True)
+    ltm_df = ltm_df.groupby('block_id').apply(_get_long_visible_s).reset_index(drop=True)
+
+    stm_df = df[~df.ltm]
+
+    df = pd.concat([ltm_df, stm_df])
+
+    df = df.drop(['phase_visible_time', 'phase_cue_time'], 
+                 axis='columns')
+
     return df
