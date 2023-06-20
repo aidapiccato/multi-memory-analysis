@@ -22,8 +22,16 @@ def _get_trial_data(trial, trial_num):
 
     d = {'trial_num': trial_num, 'time': trial[1][0][1]}
     d['block_id'] = stim['filename']
-    d['visible'] = stim['visible']
-    d['ltm'] = stim['ltm']
+    if "visible" in stim:
+        d['visible'] = stim['visible']
+    else:
+        d['visible'] = True
+
+    if "ltm" in stim:
+        d['ltm'] = stim['ltm']
+    else:
+        d['ltm'] = False
+    
     for i in range(6):
         d[f'object_{i}_x'] = None
         d[f'object_{i}_y'] = None
@@ -107,10 +115,6 @@ def _get_trial_data(trial, trial_num):
                     d['response_y'] = meta_state['response'][1]
                     d['response_theta'] = _get_angle(d['response_x'], d['response_y'])
                 response = True
-<<<<<<< HEAD
-=======
-
->>>>>>> 1c5c26c0ccafc99667e499a3ebc21df2767ca4df
     if not response:
         return None
     
@@ -122,11 +126,6 @@ def _get_trial_data(trial, trial_num):
     elif d['final_phase'] != 'cue':
         d['reaction_time_s'] = d['reaction_time_steps'] / 60
 
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> 1c5c26c0ccafc99667e499a3ebc21df2767ca4df
     # Removing keys we don't need
     for k in ['phase_delay_time', 'phase_fixation_time', 
               'phase_response_time', 'reaction_time_steps',
