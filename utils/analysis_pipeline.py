@@ -74,7 +74,7 @@ def plot_error(column, df, xlabel, title):
     df['precision_difference_0'] = precision_difference_arr
     df['precision_difference_0_abs'] = df['precision_difference_0'].abs()
 
-    ylabel = "Error"
+    ylabel = 'Angular Distance from Target (rad)'
 
     df.groupby(column).precision_difference_0_abs.mean().plot(xlabel= xlabel, ylabel= ylabel, title=title)
 
@@ -89,7 +89,8 @@ def plot_rt(column, df, xlabel, title):
         title (str): the title of the graph
     """
     ylabel = "Reaction Time (s)"
-    df.groupby(column).time.mean().plot(xlabel= xlabel, ylabel= ylabel, title=title)
+    df['reaction_time_s'] = df['reaction_time_steps'] / 60
+    df.groupby(column).reaction_time_s.mean().plot(xlabel= xlabel, ylabel= ylabel, title=title)
 
 def plot_hist(column, df, xlabel, title):
     """plotting a distribution of the parameter given
@@ -102,13 +103,12 @@ def plot_hist(column, df, xlabel, title):
     """
     df[column].plot(kind="hist",xlabel=xlabel,title=title)
 
-def plot_precision(df):
+def plot_precision(column,df,xlabel,title):
     """plotting precision of the choice in regards to the neighborhod that was chosen
 
     Args:
         df (DataFrame): the dataframe from which you will be pulling from 
         xlabel (str): the x axis label for the graph
-        ylabel (str): the y axis label for the graph
         title (str): the title of the graph
     """
 
@@ -122,6 +122,18 @@ def plot_precision(df):
 
     df['precision_difference'] = response_precision_arr
 
-def plot_SD(df, column):
-    df.groupby(column).precision_difference_0_abs.std().plot()
+    ylabel = 'Angular Distance from Object (rad)'
+    df.groupby(column).precision_difference.mean().plot(xlabel= xlabel, ylabel= ylabel, title=title)
+
+def plot_SD(column, df, xlabel, title):
+    """Plot the standard deviation as a function of a column
+
+    Args:
+        column (str): the column you want to find the standard deviation of
+        df (DataFrame): the datafram from which you will be pulling from 
+        xlabel (str): the x axis label for the graph
+        title (str): the title of the graph
+    """
+
+    df[column].std().plot(xlabel=xlabel,ylabel='Standard Deviation',title=title)
 

@@ -128,7 +128,7 @@ def _get_trial_data(trial, trial_num):
 
     # Removing keys we don't need
     for k in ['phase_delay_time', 'phase_fixation_time', 
-              'phase_response_time', 'reaction_time_steps',
+              'phase_response_time',
               'final_phase']:
         d.pop(k)
 
