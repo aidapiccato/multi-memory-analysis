@@ -18,6 +18,9 @@ def _conv_angle(theta):
         return 2 * np.pi + theta
     return theta
 
+def rad_convert(value):
+    return 2 * np.pi * value 
+
 def find_angular_dist(theta1, theta2):
     """find the angular distance between two angles
 
@@ -135,5 +138,5 @@ def plot_SD(column, df, xlabel, title):
         title (str): the title of the graph
     """
 
-    df[column].std().plot(xlabel=xlabel,ylabel='Standard Deviation',title=title)
+    df.groupby(column).ang_dist.std().plot(xlabel=xlabel,ylabel='Standard Deviation',title=title)
 
