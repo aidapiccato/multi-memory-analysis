@@ -3,11 +3,14 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+def generate_stim():
+    # return np.random.uniform(0,1)
+    return 0.488838
 def generate_mean(set_size):
     """generate a mean value based on the set size
 
     Args:
-        set_size (_float_): the amount of objects in the set
+        set_size (int): the amount of objects in the set
 
     Returns:
         _float_: _the calculated mean value_
@@ -28,7 +31,7 @@ def sample(mean, std, size):
     """
     return np.random.normal(mean, std, size)
 
-def decision(samples, threshold):
+def decision(stim, sample, threshold):
     """Makes a decision about the sample data based on the threshold parameter
 
     Args:
@@ -39,14 +42,13 @@ def decision(samples, threshold):
         _float_: array of decisions based on the threshold
     """
     decision = 0
-    for sample in samples:
-        if sample >= threshold:
-            decision = 1
-        if sample < threshold:
-            decision = 0
-    return decision
 
-def accuracy(ground_truth, decision):
+    if sample >= threshold:
+        return stim 
+    if sample < threshold:
+        return np.random.uniform(0,1)
+
+def accuracy(stim, decision):
     """measure the accuracy of the model with the ground truth data set and the responses from the model
 
     Args:
@@ -57,9 +59,9 @@ def accuracy(ground_truth, decision):
         _float_: accuracy and mean accuracy of comparison
     """
     
-    if ground_truth == decision:
+    if stim == decision:
         accuracy=1
-    if ground_truth != decision:
+    if stim != decision:
         accuracy=0
 
     return accuracy
