@@ -12,7 +12,7 @@ def generate_mean(set_size):
     Returns:
         _float_: _the calculated mean value_
     """
-    mean = set_size * 0.05
+    mean = 7 / set_size
     return mean
 
 def sample(mean, std, size):
