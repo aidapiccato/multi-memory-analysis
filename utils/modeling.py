@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import random
 import matplotlib.pyplot as plt
 from utils import analysis_pipeline
 
@@ -24,7 +25,7 @@ def generate_mean(set_size):
     return mean
 
 def cue(stim):
-    return np.random.choice(stim)
+    return stim.index(np.random.choice(stim))
 
 def sample(mean, std):
     """creates a sample set
@@ -49,25 +50,35 @@ def decision_random(stim, sample, cue, threshold):
     Returns:
         _float_: array of decisions based on the threshold
     """
-
     if sample >= threshold:
-        return np.random.normal(cue,1) 
+        return np.random.normal(stim[cue],1) 
     if sample < threshold:
         return np.random.uniform(0,1)
-    
 def decision_confused(stim, sample, cue, threshold):
-    random_cue = np.random.choice(stim)
+    random_cue = random.randint(len(stim))
 
     if sample >= threshold:
-        return np.random.normal(cue,1) 
+        return np.random.normal(stim[cue],1) 
     if sample < threshold:
-        return np.random.normal(random_cue,1)
+        return np.random.normal(stim[random_cue],1)
+    
+def normalize_decision(theta):
+    if theta > (2 * np.pi):
+        return theta % (2 * np.pi)
+    else:
+        return theta
     
 def find_stim_choice(stim, decision):
     distances = []
     for value in stim:
         distances.append(analysis_pipeline.find_angular_dist(value,decision))
-    return distances.index(min(distances)) + 1
+    closest_choice = distances.index(min(distances)) + 1
+    
+    if abs(distances[closest_choice - 1]) > 2:
+        return closest_choice
+    else:
+        return None
+        
 
 def accuracy(cue, choice):
     """measure the accuracy of the model with the ground truth data set and the responses from the model
