@@ -4,15 +4,16 @@ import seaborn as sns
 import random
 import matplotlib.pyplot as plt
 from utils import analysis_pipeline
+import math
 
 def generate_stim(set_size):
     stimulus = []
-    for stim in range(0,set_size):
+    for stim in range(0,int(set_size)):
         stimulus.append(np.random.uniform(0,1))
     
     return stimulus
 
-def generate_mean(set_size):
+def generate_mean_set(set_size):
     """generate a mean value based on the set size
 
     Args:
@@ -24,10 +25,22 @@ def generate_mean(set_size):
     mean = 7 / set_size
     return mean
 
-def cue(stim):
+def generate_mean_delay(delay_interval):
+    """generate a mean value based on the set size
+
+    Args:
+        delay_interval (int[]): the amount of objects in the set
+
+    Returns:
+        _float_: _the calculated mean value_
+    """
+    mean = delay_interval * 3
+    return mean
+
+def generate_cue(stim):
     return stim.index(np.random.choice(stim))
 
-def sample(mean, std):
+def generate_sample(mean, std):
     """creates a sample set
 
     Args:
@@ -51,20 +64,22 @@ def decision_random(stim, sample, cue, threshold):
         _float_: array of decisions based on the threshold
     """
     if sample >= threshold:
-        return np.random.normal(stim[cue],1) 
+        return np.random.normal(stim[cue],0.001) 
     if sample < threshold:
         return np.random.uniform(0,1)
 def decision_confused(stim, sample, cue, threshold):
-    random_cue = random.randint(len(stim))
+    random_cue = random.randint(0,len(stim))
 
     if sample >= threshold:
-        return np.random.normal(stim[cue],1) 
+        return np.random.normal(stim[cue],0.001) 
     if sample < threshold:
-        return np.random.normal(stim[random_cue],1)
+        return np.random.normal(stim[random_cue-1],0.001)
     
 def normalize_decision(theta):
     if theta > (2 * np.pi):
         return theta % (2 * np.pi)
+    elif theta < 0:
+        return 2 * np.pi + theta 
     else:
         return theta
     
@@ -72,15 +87,16 @@ def find_stim_choice(stim, decision):
     distances = []
     for value in stim:
         distances.append(analysis_pipeline.find_angular_dist(value,decision))
-    closest_choice = distances.index(min(distances)) + 1
+    distances = np.abs(distances)
+    closest_choice = np.argmin(distances)
     
-    if abs(distances[closest_choice - 1]) > 2:
+    if distances[closest_choice] < 2:
         return closest_choice
     else:
         return None
-        
+         
 
-def accuracy(cue, choice):
+def generate_accuracy(cue, choice):
     """measure the accuracy of the model with the ground truth data set and the responses from the model
 
     Args:
@@ -97,3 +113,162 @@ def accuracy(cue, choice):
         accuracy=0
 
     return accuracy
+
+def set_create_df(trials, std):
+    set_sizes = np.random.randint(3,6,trials)
+    df = pd.DataFrame(set_sizes, columns=['set_size'])
+    stimulus = []
+    mean = []
+    cue = []
+    sample = []
+
+    for (row_index,row_data) in df.iterrows():
+        stimulus.append(generate_stim(row_data['set_size']))
+    df['stim'] = stimulus
+    for (row_index,row_data) in df.iterrows():
+        mean.append(generate_mean_set(row_data['set_size']))
+    df['mean'] = mean
+    for (row_index,row_data) in df.iterrows():
+        cue.append(generate_cue(row_data['stim']))
+    df['cue'] = cue
+    for (row_index,row_data) in df.iterrows():
+        sample.append(generate_sample(row_data['mean'],std))
+    df['sample'] = sample
+    
+    return df
+def delay_create_df(trials, std):
+    set_sizes = np.random.randint(3,6,trials)
+    df = pd.DataFrame(set_sizes, columns=['set_size'])
+    
+    delay_interval = []
+    for i in range(0,trials):
+        delay_interval.append(np.random.choice([0.5,1,1.5,2,3]))
+    df['delay_s'] = delay_interval
+
+    stimulus = []
+    mean = []
+    cue = []
+    sample = []
+
+    for (row_index,row_data) in df.iterrows():
+        stimulus.append(generate_stim(row_data['set_size']))
+    df['stim'] = stimulus
+    for (row_index,row_data) in df.iterrows():
+        mean.append(generate_mean_delay(row_data['delay_s']))
+    df['mean'] = mean
+    for (row_index,row_data) in df.iterrows():
+        cue.append(generate_cue(row_data['stim']))
+    df['cue'] = cue
+    for (row_index,row_data) in df.iterrows():
+        sample.append(generate_sample(row_data['mean'],std))
+    df['sample'] = sample
+    
+    return df
+
+def run_model_random(df, threshold):
+    df = df.copy()
+    decision = []
+    guessing = []
+    normalized_decision = []
+    stim_rad = []
+    choice = []
+
+    for (row_index,row_data) in df.iterrows():
+        if row_data['sample'] < 0.1:
+            guessing.append(1)
+        else:
+            guessing.append(0)
+        decision.append(decision_random(row_data['stim'],row_data['sample'],row_data['cue'],threshold))
+
+    df['decision'] = decision
+    df['guessing'] = guessing
+    df['decision_rad'] = analysis_pipeline.rad_convert(df['decision'])
+
+    for (row_index,row_data) in df.iterrows():
+        buffer = []
+        for value in row_data['stim']:
+            buffer.append(analysis_pipeline.rad_convert(value))
+        stim_rad.append(buffer)
+    df['stim_rad'] =  stim_rad
+
+    for (row_index,row_data) in df.iterrows():
+        normalized_decision.append(normalize_decision(row_data['decision_rad']))
+    df['normalized_decision'] = normalized_decision
+
+    for (row_index,row_data) in df.iterrows():
+        choice.append(find_stim_choice(row_data['stim_rad'],row_data['normalized_decision']))
+    df['choice'] = choice
+    return df
+
+def run_model_confused(df, threshold):
+    df = df.copy()
+    decision = []
+    guessing = []
+    normalized_decision = []
+    stim_rad = []
+    choice = []
+
+    for (row_index,row_data) in df.iterrows():
+        if row_data['sample'] < 0.1:
+            guessing.append(1)
+        else:
+            guessing.append(0)
+        decision.append(decision_confused(row_data['stim'],row_data['sample'],row_data['cue'],threshold))
+
+    df['decision'] = decision
+    df['guessing'] = guessing
+    df['decision_rad'] = analysis_pipeline.rad_convert(df['decision'])
+
+    for (row_index,row_data) in df.iterrows():
+        buffer = []
+        for value in row_data['stim']:
+            buffer.append(analysis_pipeline.rad_convert(value))
+        stim_rad.append(buffer)
+    df['stim_rad'] =  stim_rad
+
+    for (row_index,row_data) in df.iterrows():
+        normalized_decision.append(normalize_decision(row_data['decision_rad']))
+    df['normalized_decision'] = normalized_decision
+
+    for (row_index,row_data) in df.iterrows():
+        choice.append(find_stim_choice(row_data['stim_rad'],row_data['normalized_decision']))
+    df['choice'] = choice
+    return df
+
+def model_analysis(df):
+    df = df.copy()
+    distances = []
+    accuracy = []
+    ang_dist_cue = []
+    ang_dist = []
+
+    for (row_index,row_data) in df.iterrows():
+        buffer = []
+        for value in row_data['stim_rad']:
+            buffer.append(analysis_pipeline.find_angular_dist(value,row_data['normalized_decision']))
+        distances.append(buffer)
+    closest_choice = distances.index(min(distances))
+    df['distances'] = distances
+    
+    for (row_index,row_data) in df.iterrows():
+        accuracy.append(generate_accuracy(row_data['cue'],row_data['choice']))
+    df['correct'] = accuracy
+
+    for (row_index,row_data) in df.iterrows():
+        ang_dist_cue.append(analysis_pipeline.find_angular_dist(row_data['stim_rad'][row_data['cue']],row_data['decision_rad']))
+    df['precision_difference_0'] = ang_dist_cue
+    df['precision_difference_0_abs'] = df['precision_difference_0'].abs()
+
+    for (row_index,row_data) in df.iterrows():
+        if math.isnan(row_data['choice']):
+            ang_dist.append(None)
+        else:
+            ang_dist.append(analysis_pipeline.find_angular_dist(row_data['stim_rad'][int(row_data['choice'])],row_data['decision_rad']))
+    df['precision_difference_choice'] = ang_dist
+    df['precision_difference_choice_abs'] = df['precision_difference_choice'].abs()
+    return df
+    
+
+
+
+
