@@ -22,7 +22,7 @@ def generate_mean_set(set_size):
     Returns:
         _float_: _the calculated mean value_
     """
-    mean = 7 / set_size
+    mean = 2 * (0.5 ** set_size)
     return mean
 
 def generate_mean_delay(delay_interval):
@@ -34,7 +34,7 @@ def generate_mean_delay(delay_interval):
     Returns:
         _float_: _the calculated mean value_
     """
-    mean = delay_interval * 3
+    mean = 2 * (0.5 ** delay_interval)
     return mean
 
 def generate_cue(stim):
