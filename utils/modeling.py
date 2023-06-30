@@ -53,7 +53,7 @@ def generate_sample(mean, std):
     """
     return np.random.normal(mean, std)
 
-def decision_random(stim, sample, cue, threshold):
+def decision_random(stim, sample, cue, threshold, std):
     """Makes a decision about the sample data based on the threshold parameter. This function accounts for random guessing 
 
     Args:
@@ -64,16 +64,16 @@ def decision_random(stim, sample, cue, threshold):
         _float_: array of decisions based on the threshold
     """
     if sample >= threshold:
-        return np.random.normal(stim[cue],0.001) 
+        return np.random.normal(stim[cue],std) 
     if sample < threshold:
         return np.random.uniform(0,1)
-def decision_confused(stim, sample, cue, threshold):
+def decision_confused(stim, sample, cue, threshold, std):
     random_cue = random.randint(0,len(stim))
 
     if sample >= threshold:
-        return np.random.normal(stim[cue],0.001) 
+        return np.random.normal(stim[cue],std) 
     if sample < threshold:
-        return np.random.normal(stim[random_cue-1],0.001)
+        return np.random.normal(stim[random_cue-1],std)
     
 def normalize_decision(theta):
     if theta > (2 * np.pi):
@@ -83,7 +83,7 @@ def normalize_decision(theta):
     else:
         return theta
     
-def find_stim_choice(stim, decision):
+def find_stim_choice_thresh(stim, decision):
     distances = []
     for value in stim:
         distances.append(analysis_pipeline.find_angular_dist(value,decision))
@@ -94,6 +94,15 @@ def find_stim_choice(stim, decision):
         return closest_choice
     else:
         return None
+
+def find_stim_choice(stim, decision):
+    distances = []
+    for value in stim:
+        distances.append(analysis_pipeline.find_angular_dist(value,decision))
+    distances = np.abs(distances)
+    closest_choice = np.argmin(distances)
+    
+    return closest_choice
          
 
 def generate_accuracy(cue, choice):
@@ -114,7 +123,7 @@ def generate_accuracy(cue, choice):
 
     return accuracy
 
-def set_create_df(trials, std):
+def set_create_df(trials, std_sample):
     set_sizes = np.random.randint(3,6,trials)
     df = pd.DataFrame(set_sizes, columns=['set_size'])
     stimulus = []
@@ -132,7 +141,7 @@ def set_create_df(trials, std):
         cue.append(generate_cue(row_data['stim']))
     df['cue'] = cue
     for (row_index,row_data) in df.iterrows():
-        sample.append(generate_sample(row_data['mean'],std))
+        sample.append(generate_sample(row_data['mean'],std_sample))
     df['sample'] = sample
     
     return df
@@ -165,20 +174,21 @@ def delay_create_df(trials, std):
     
     return df
 
-def run_model_random(df, threshold):
+def run_model_random(df, threshold, std_decision):
     df = df.copy()
     decision = []
     guessing = []
     normalized_decision = []
     stim_rad = []
     choice = []
+    choice_rad = []
 
     for (row_index,row_data) in df.iterrows():
         if row_data['sample'] < 0.1:
             guessing.append(1)
         else:
             guessing.append(0)
-        decision.append(decision_random(row_data['stim'],row_data['sample'],row_data['cue'],threshold))
+        decision.append(decision_random(row_data['stim'],row_data['sample'],row_data['cue'],threshold,std_decision))
 
     df['decision'] = decision
     df['guessing'] = guessing
@@ -198,22 +208,24 @@ def run_model_random(df, threshold):
     for (row_index,row_data) in df.iterrows():
         choice.append(find_stim_choice(row_data['stim_rad'],row_data['normalized_decision']))
     df['choice'] = choice
+
     return df
 
-def run_model_confused(df, threshold):
+def run_model_confused(df, threshold,std_decision):
     df = df.copy()
     decision = []
     guessing = []
     normalized_decision = []
     stim_rad = []
     choice = []
+    choice_rad = []
 
     for (row_index,row_data) in df.iterrows():
         if row_data['sample'] < 0.1:
             guessing.append(1)
         else:
             guessing.append(0)
-        decision.append(decision_confused(row_data['stim'],row_data['sample'],row_data['cue'],threshold))
+        decision.append(decision_confused(row_data['stim'],row_data['sample'],row_data['cue'],threshold,std_decision))
 
     df['decision'] = decision
     df['guessing'] = guessing
@@ -233,6 +245,7 @@ def run_model_confused(df, threshold):
     for (row_index,row_data) in df.iterrows():
         choice.append(find_stim_choice(row_data['stim_rad'],row_data['normalized_decision']))
     df['choice'] = choice
+
     return df
 
 def model_analysis(df):
@@ -247,7 +260,6 @@ def model_analysis(df):
         for value in row_data['stim_rad']:
             buffer.append(analysis_pipeline.find_angular_dist(value,row_data['normalized_decision']))
         distances.append(buffer)
-    closest_choice = distances.index(min(distances))
     df['distances'] = distances
     
     for (row_index,row_data) in df.iterrows():
