@@ -69,7 +69,7 @@ def run_test_trial(df,std):
 
     dict = {'delay_s': [delay],
             'encoding': [encoding]
-            'set_size': [set_size],
+            #'set_size': [set_size],
             }
     
     return df
