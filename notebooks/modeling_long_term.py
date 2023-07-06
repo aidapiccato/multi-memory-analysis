@@ -22,7 +22,7 @@ def generate_set(df):
     df['set_sizes'] = set_sizes
     return df['set_sizes']
 
-def generate_trial_length():
+def generate_trial_length(df):
     pass
 
 def generate_rxn_time():
@@ -31,32 +31,32 @@ def generate_rxn_time():
 def generate_trial_type():
     pass
 
-def run_train_trial(df, std):
-    delay = generate_delay(df)
-    df['delay_s'] = delay
+# #def run_train_trial(df, std):
+#     delay = generate_delay(df)
+#     df['delay_s'] = delay
 
-    df['encoding_s'] = generate_encoding(df)
+#     df['encoding_s'] = generate_encoding(df)
 
-    set_size = generate_set(df)
-    df['set_size'] = set_size
+#     set_size = generate_set(df)
+#     df['set_size'] = set_size
 
-    df['trial_length'] = generate_trial_length(df)
+#     df['trial_length'] = generate_trial_length(df)
 
-    df['rxn_time'] = generate_rxn_time(df)
+#     df['rxn_time'] = generate_rxn_time(df)
 
-    stim = modeling.generate_stim(set_size)
-    df['stim'] = stim
+#     stim = modeling.generate_stim(set_size)
+#     df['stim'] = stim
 
-    mean = modeling.generate_mean_delay(delay)
-    df['mean'] = mean
+#     mean = modeling.generate_mean_delay(delay)
+#     df['mean'] = mean
 
-    df['cue'] = modeling.generate_cue(stim)
+#     df['cue'] = modeling.generate_cue(stim)
 
-    df['sample'] = modeling.generate_sample(mean,std)
+#     df['sample'] = modeling.generate_sample(mean,std)
     
-    return df
+#     return df
 
-def run_test_trial(df,std):
+def run_train_trial(df,std):
     delay = generate_delay(df)
     encoding = generate_encoding(df)
     set_size = generate_set(df)
@@ -68,13 +68,44 @@ def run_test_trial(df,std):
     sample = modeling.generate_sample(mean,std)
 
     dict = {'delay_s': [delay],
-            'encoding': [encoding]
-            #'set_size': [set_size],
+            'encoding': [encoding],
+            'set_size': [set_size],
+            'trial_length': [trial_length],
+            'rxn_time': [rxn_time],
+            'stim': [stim],
+            'mean': [mean],
+            'cue': [cue],
+            'sample': [sample],
             }
     
     return df
 
-def create_ltm_df(trials):
+def run_test_trial(df,std):
+    last_train_trial = df['trial_type'].rfind('train')
+    delay = 0
+    encoding = 0
+    set_size = df.iloc[last_train_trial]['set_size']
+    trial_length = generate_trial_length(df)
+    rxn_time = generate_rxn_time(df)
+    stim = df.iloc[last_train_trial]['stim']
+    mean = modeling.generate_mean_delay(delay)
+    cue = modeling.generate_cue(stim)
+    sample = modeling.generate_sample(mean,std)
+
+    dict = {'delay_s': [delay],
+            'encoding': [encoding],
+            'set_size': [set_size],
+            'trial_length': [trial_length],
+            'rxn_time': [rxn_time],
+            'stim': [stim],
+            'mean': [mean],
+            'cue': [cue],
+            'sample': [sample],
+            }
+    
+    return df
+
+def create_ltm_block(trials):
     for i in range(0,trials):
         trial_type = generate_trial_type()
         if trial_type == 'test':
