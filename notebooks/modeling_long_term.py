@@ -23,13 +23,24 @@ def generate_set(df):
     return df['set_sizes']
 
 def generate_trial_length(df):
-    pass
+    return df['delay'] + df['encoding'] + df['rxn_time_s']
 
 def generate_rxn_time():
-    pass
+    np.random.normal(0.8773594377510041, 0.7636419306909825)
 
-def generate_trial_type():
-    pass
+def generate_trial_type(df):
+    num_trials = 20
+    curr_trial = df['trial_num']                       
+    p_visible = np.clip(
+            (num_trials - curr_trial)/num_trials,
+            a_min=0,
+            a_max=1)
+    p_visible = p_visible ** 3
+    trial_type =  np.random.choice([0, 1], p=[1 - p_visible, p_visible])
+    if trial_type == 1:
+        return 'train'
+    else:
+        return 'test'
 
 # #def run_train_trial(df, std):
 #     delay = generate_delay(df)
@@ -77,7 +88,8 @@ def run_train_trial(df,std):
             'cue': [cue],
             'sample': [sample],
             }
-    
+    df = df.append(dict, ignore_index = True)
+
     return df
 
 def run_test_trial(df,std):
@@ -91,8 +103,11 @@ def run_test_trial(df,std):
     mean = modeling.generate_mean_delay(delay)
     cue = modeling.generate_cue(stim)
     sample = modeling.generate_sample(mean,std)
+    
+    trial_num = df.iloc[-1]['trial_num'] + 1
 
-    dict = {'delay_s': [delay],
+    dict = {'trial_num':[trial_num],
+            'delay_s': [delay],
             'encoding': [encoding],
             'set_size': [set_size],
             'trial_length': [trial_length],
@@ -102,16 +117,25 @@ def run_test_trial(df,std):
             'cue': [cue],
             'sample': [sample],
             }
+    df = df.append(dict, ignore_index = True)
     
     return df
 
-def create_ltm_block(trials):
+def create_ltm_block(trials,df,std):
+    trial_num = 1
     for i in range(0,trials):
+        trial_num += 1
         trial_type = generate_trial_type()
         if trial_type == 'test':
-            run_test_trial()
+            run_test_trial(df,std)
         if trial_type == 'train':
-            run_train_trial()
+            run_train_trial(df,std)
+
+def create_df(blocks,std,trials):
+    df = pd.DataFrame(1, columns=['trial_num'])
+    for i in range(0,blocks):
+        create_ltm_block(trials,df,std)
+    return df
 
 def model_analysis(df):
     df = df.copy()
@@ -128,7 +152,7 @@ def model_analysis(df):
     df['distances'] = distances
     
     for (row_index,row_data) in df.iterrows():
-        accuracy.append(generate_accuracy(row_data['cue'],row_data['choice']))
+        accuracy.append(modeling.generate_accuracy(row_data['cue'],row_data['choice']))
     df['correct'] = accuracy
 
     for (row_index,row_data) in df.iterrows():
