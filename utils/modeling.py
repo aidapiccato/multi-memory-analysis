@@ -13,6 +13,10 @@ def generate_stim(set_size):
     
     return stimulus
 
+def generate_stim_dist(set_size,dist):
+    points = np.arange(0,1,step=dist)
+    return np.random.choice(points,int(set_size),replace=False)
+
 def generate_mean_set(set_size):
     """generate a mean value based on the set size
 
@@ -38,7 +42,8 @@ def generate_mean_delay(delay_interval):
     return mean
 
 def generate_cue(stim):
-    return stim.index(np.random.choice(stim))
+    cue = np.where(stim == np.random.choice(stim))
+    return cue[0][0]
 
 def generate_sample(mean, std):
     """creates a sample set
@@ -132,7 +137,7 @@ def set_create_df(trials, std_sample):
     sample = []
 
     for (row_index,row_data) in df.iterrows():
-        stimulus.append(generate_stim(row_data['set_size']))
+        stimulus.append(generate_stim_dist(row_data['set_size'],0.1))
     df['stim'] = stimulus
     for (row_index,row_data) in df.iterrows():
         mean.append(generate_mean_set(row_data['set_size']))
@@ -160,7 +165,7 @@ def delay_create_df(trials, std):
     sample = []
 
     for (row_index,row_data) in df.iterrows():
-        stimulus.append(generate_stim(row_data['set_size']))
+        stimulus.append(generate_stim_dist(row_data['set_size'],0.1))
     df['stim'] = stimulus
     for (row_index,row_data) in df.iterrows():
         mean.append(generate_mean_delay(row_data['delay_s']))
