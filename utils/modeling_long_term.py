@@ -22,8 +22,8 @@ def generate_trial_length(delay,encoding,rxn):
 def generate_rxn_time():
     return np.clip(np.random.normal(0.8773594377510041, 0.7636419306909825),0,3)
 
-def generate_trial_type(curr_trial):
-    num_trials = 20                      
+def generate_trial_type(curr_trial, num_trials):
+    num_trials = num_trials                      
     p_visible = np.clip(
             (num_trials - curr_trial)/num_trials,
             a_min=0,
@@ -37,6 +37,7 @@ def generate_trial_type(curr_trial):
     
 
 def run_train_trial(df,std):
+    last_train_trial = len(df[df['trial_type'] == 'train']) - 1
     delay = generate_delay(df)
     encoding = generate_encoding(df)
     rxn_time = generate_rxn_time()
@@ -46,6 +47,8 @@ def run_train_trial(df,std):
     mean = modeling.generate_mean_delay(delay)
     cue = modeling.generate_cue(stim)
     sample = modeling.generate_sample(mean,std)
+    total_delay = df.iloc[last_train_trial:]['trial_length'].sum()
+
 
     trial_num = df.iloc[-1]['trial_num'] + 1
 
@@ -61,7 +64,7 @@ def run_train_trial(df,std):
             'cue': cue,
             'sample': sample,
             'trial_type': 'train',
-            'cumulative_delay': 0,
+            'cumulative_delay': total_delay,
             'cumulative_encoding':0,
             }
     
@@ -78,19 +81,11 @@ def run_test_trial(df,std):
     trial_length = generate_trial_length(delay,encoding,rxn_time)
     stim = df.iloc[0]['stim']
     
-    total_delay = []
-    for (row_index,row_data) in df.iterrows():
-        if (row_index >= last_train_trial):
-            total_delay.append(row_data['trial_length'])
-    total_delay = sum(total_delay)  
+    total_delay = df.iloc[last_train_trial:]['trial_length'].sum()
 
-    total_encoding = []
-    for (row_index,row_data) in df.iterrows():
-        if (row_index >= last_train_trial):
-            total_encoding.append(row_data['encoding'])
-    total_encoding = sum(total_encoding)  
+    total_encoding = df['encoding'].sum()  
     
-    mean = modeling.generate_mean_delay(delay)
+    mean = modeling.generate_mean_delay(total_delay)
     cue = modeling.generate_cue(stim)
     sample = modeling.generate_sample(mean,std)
     
@@ -137,13 +132,14 @@ def create_ltm_block(trials,std):
     trial_num = -1
     for i in range(0,trials):
         trial_num += 1
-        trial_type = generate_trial_type(trial_num)
+        trial_type = generate_trial_type(curr_trial=trial_num,num_trials=trials)
         if trial_type == 'test':
             df = run_test_trial(df,std)
         if trial_type == 'train':
             df = run_train_trial(df,std)
 
     df = df.drop(labels=0,axis=0)
+    df['cumulative_delay_bins'] = pd.qcut(df['cumulative_delay'],4,labels=np.arange(4),duplicates='drop')
     return df
 
 def create_df(blocks,std,trials):

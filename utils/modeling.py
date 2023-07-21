@@ -38,7 +38,7 @@ def generate_mean_delay(delay_interval):
     Returns:
         _float_: _the calculated mean value_
     """
-    mean = 2 * (0.5 ** delay_interval)
+    mean = 2 * (0.8 ** (0.1 * delay_interval))
     return mean
 
 def generate_cue(stim):
@@ -138,6 +138,7 @@ def set_create_df(trials, std_sample):
 
     for (row_index,row_data) in df.iterrows():
         stimulus.append(generate_stim_dist(row_data['set_size'],0.1))
+        #stimulus.append(generate_stim(row_data['set_size']))
     df['stim'] = stimulus
     for (row_index,row_data) in df.iterrows():
         mean.append(generate_mean_set(row_data['set_size']))
@@ -166,6 +167,7 @@ def delay_create_df(trials, std):
 
     for (row_index,row_data) in df.iterrows():
         stimulus.append(generate_stim_dist(row_data['set_size'],0.1))
+        #stimulus.append(generate_stim(row_data['set_size']))
     df['stim'] = stimulus
     for (row_index,row_data) in df.iterrows():
         mean.append(generate_mean_delay(row_data['delay_s']))
@@ -189,11 +191,11 @@ def run_model_random(df, threshold, std_decision):
     choice_rad = []
 
     for (row_index,row_data) in df.iterrows():
-        if row_data['sample'] < 0.1:
+        if row_data['sample'] < threshold:
             guessing.append(1)
         else:
             guessing.append(0)
-        decision.append(decision_random(row_data['stim'],row_data['sample'],row_data['cue'],threshold,std_decision))
+        decision.append(decision_random(stim=row_data['stim'],sample=row_data['sample'],cue=row_data['cue'],threshold=threshold,std=std_decision))
 
     df['decision'] = decision
     df['guessing'] = guessing

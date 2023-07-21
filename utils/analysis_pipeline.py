@@ -57,8 +57,7 @@ def plot_accuracy(column, df, xlabel, title):
         ylabel (str): the y axis label for the graph
         title (str): the title of the graph
     """
-    ylabel = "Accuracy"
-    df.groupby(column).correct.mean().plot(xlabel= xlabel, ylabel= ylabel, title=title)
+    df.groupby(column).correct.mean().plot(xlabel= xlabel, title=title, label="Accuracy")
 
 def plot_error(column, df, xlabel, title):
     """plotting the error against another variable in the dataset
@@ -79,7 +78,7 @@ def plot_error(column, df, xlabel, title):
 
     ylabel = 'Angular Distance from Target (rad)'
 
-    df.groupby(column).precision_difference_0_abs.mean().plot(xlabel= xlabel, ylabel= ylabel, title=title)
+    df.groupby(column).precision_difference_0_abs.mean().plot(xlabel= xlabel, ylabel= ylabel, title=title, label="Error")
 
 def plot_rt(column, df, xlabel, title):
     """plotting the reaction time against another variable in the dataset
