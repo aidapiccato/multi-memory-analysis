@@ -112,6 +112,7 @@ def run_test_trial(df,std):
 def create_ltm_block(trials,std):
     set_size = generate_set()
     stim = modeling.generate_stim_dist(set_size,0.1)
+    #stim = modeling.generate_stim(set_size)
     dict = {'trial_num':-1,
             'delay_s': 0,
             'encoding': 0,

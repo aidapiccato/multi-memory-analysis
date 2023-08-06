@@ -34,8 +34,8 @@ def find_angular_dist(theta1, theta2):
     conv_theta1 = _conv_angle(theta1)
     conv_theta2 = _conv_angle(theta2)
     TAU = 2 * np.pi
-    a = (theta1 - theta2) % TAU
-    b = (theta2 - theta1) % TAU
+    a = (conv_theta1 - conv_theta2) % TAU
+    b = (conv_theta2 - conv_theta1) % TAU
     return -a if a < b else b
 
 def round(column,df):

@@ -24,6 +24,7 @@ def _get_trial_data(trial, trial_num):
     d['block_id'] = stim['filename']
     if "visible" in stim:
         d['visible'] = stim['visible']
+        d['fixed'] = stim['fixed']
     else:
         d['visible'] = True
 
